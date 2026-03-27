@@ -408,8 +408,15 @@ q::after { content: close-quote; }
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+@keyframes marquee-reverse {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
 .animate-marquee {
   animation: marquee 30s linear infinite;
+}
+.animate-marquee-reverse {
+  animation: marquee-reverse 38s linear infinite;
 }
 
 @keyframes blink {
@@ -923,7 +930,7 @@ main {
   .btn-primary:hover, .btn-secondary:hover, .chip:hover, .card-hover:hover { transform: none; }
   .btn-primary::after { display: none; }
   .faq-content { transition: none; }
-  .animate-marquee { animation: none; }
+  .animate-marquee, .animate-marquee-reverse { animation: none; }
   /* E7: disable color-morph overlays */
   [data-scroll-overlay] { display: none !important; }
   .animate-float { animation: none; }

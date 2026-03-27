@@ -1,4 +1,7 @@
+"use client";
+
 import ScrollReveal from "./ScrollReveal";
+import { useRef } from "react";
 
 const LOGOS = [
   "TechFlow",
@@ -29,6 +32,34 @@ function LogoItem({ name }: { name: string }) {
   );
 }
 
+function MarqueeRow({ reverse = false, opacity = 1 }: { reverse?: boolean; opacity?: number }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  function handleMouseEnter() {
+    if (rowRef.current) rowRef.current.style.animationPlayState = "paused";
+  }
+  function handleMouseLeave() {
+    if (rowRef.current) rowRef.current.style.animationPlayState = "running";
+  }
+
+  return (
+    <div
+      ref={rowRef}
+      className={`flex ${reverse ? "animate-marquee-reverse" : "animate-marquee"}`}
+      style={{ animationDuration: reverse ? "38s" : "30s", opacity }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {LOGOS.map((name) => (
+        <LogoItem key={`a-${name}`} name={name} />
+      ))}
+      {LOGOS.map((name) => (
+        <LogoItem key={`b-${name}`} name={name} />
+      ))}
+    </div>
+  );
+}
+
 export default function SocialProof() {
   return (
     <section
@@ -48,36 +79,21 @@ export default function SocialProof() {
         </p>
       </ScrollReveal>
 
-      {/* Marquee strip — constant speed, infinite, no scroll dependency */}
-      <div
-        className="relative w-full overflow-hidden"
-        aria-hidden="true"
-      >
+      {/* Marquee strips — forward + reverse rows */}
+      <div className="relative w-full overflow-hidden flex flex-col gap-3" aria-hidden="true">
         {/* Left fade */}
         <div
           className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to right, var(--color-bg) 0%, transparent 100%)",
-          }}
+          style={{ background: "linear-gradient(to right, var(--color-bg) 0%, transparent 100%)" }}
         />
         {/* Right fade */}
         <div
           className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to left, var(--color-bg) 0%, transparent 100%)",
-          }}
+          style={{ background: "linear-gradient(to left, var(--color-bg) 0%, transparent 100%)" }}
         />
 
-        <div className="flex animate-marquee" style={{ animationDuration: "30s" }}>
-          {LOGOS.map((name) => (
-            <LogoItem key={`a-${name}`} name={name} />
-          ))}
-          {LOGOS.map((name) => (
-            <LogoItem key={`b-${name}`} name={name} />
-          ))}
-        </div>
+        <MarqueeRow />
+        <MarqueeRow reverse opacity={0.38} />
       </div>
 
       <ScrollReveal direction="up" delay={100}>

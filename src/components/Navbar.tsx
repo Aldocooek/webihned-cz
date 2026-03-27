@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { m, useScroll, useReducedMotion } from "framer-motion";
+import { m, useScroll, useReducedMotion, useMotionValue } from "framer-motion";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import { trackEvent } from "@/lib/track";
@@ -17,11 +17,28 @@ export default function Navbar() {
   // Page-level scroll progress for the bottom progress bar
   const { scrollYProgress } = useScroll();
 
+  // Scroll direction hide/show
+  const lastScrollY = useRef(0);
+  const navY = useMotionValue(0);
+
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 50);
+    const handler = () => {
+      const current = window.scrollY;
+      setScrolled(current > 50);
+      if (current < 80) {
+        navY.set(0);
+      } else if (current > lastScrollY.current) {
+        // scrolling down — hide navbar
+        navY.set(-80);
+      } else {
+        // scrolling up — show navbar
+        navY.set(0);
+      }
+      lastScrollY.current = current;
+    };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
-  }, []);
+  }, [navY]);
 
   // Close mobile menu on outside click
   useEffect(() => {
@@ -78,13 +95,15 @@ export default function Navbar() {
   }
 
   return (
-    <nav
+    <m.nav
       ref={menuRef}
       className={[
         "animate-nav nav-glass sticky top-0 z-50 backdrop-blur-xl transition-colors duration-300",
         scrolled ? "bg-bg/95" : "bg-bg/60",
       ].join(" ")}
       aria-label="Hlavní navigace"
+      style={{ y: navY }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
         <Link href="/">
@@ -209,6 +228,6 @@ export default function Navbar() {
           aria-hidden="true"
         />
       )}
-    </nav>
+    </m.nav>
   );
 }

@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import VisitorCount from "./VisitorCount";
 import { trackEvent } from "@/lib/track";
 import { useMagneticButton } from "@/hooks/useMagneticButton";
 import { useScroll, useTransform, m, useReducedMotion } from "framer-motion";
+
+const HeroGL = dynamic(() => import("./HeroGL"), { ssr: false, loading: () => null });
 
 const suggestions = [
   "Dashboard pro firmu",
@@ -153,6 +156,7 @@ export default function Hero() {
 
   return (
     <section ref={heroRef} className="hero-gradient pt-8 pb-20 md:pt-14 md:pb-28 relative overflow-hidden" aria-label="Hero — vytvořte aplikaci s AI">
+      <HeroGL />
       {/* Animated gradient orb — decorative, behind all content */}
       {/* Outer wrapper handles scroll parallax via rAF (no re-renders) */}
       <div

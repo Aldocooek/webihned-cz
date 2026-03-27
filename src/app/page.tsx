@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import ScrollBackground from "@/components/ScrollBackground";
+import WaveDivider from "@/components/WaveDivider";
 import SuperagentBanner from "@/components/SuperagentBanner";
 import Hero from "@/components/Hero";
 import SocialProof from "@/components/SocialProof";
@@ -100,11 +101,7 @@ export default function Home() {
         <Hero />
         <SocialProof />
         <HowItWorks />
-        <div className="wave-divider" aria-hidden="true">
-          <svg viewBox="0 0 1200 40" preserveAspectRatio="none" fill="var(--color-border)" opacity="0.3">
-            <path d="M0 20 Q150 0 300 20 T600 20 T900 20 T1200 20 T1500 20 T1800 20 T2100 20 T2400 20 V40 H0 Z" />
-          </svg>
-        </div>
+        <WaveDivider />
         <FeaturesCarousel />
         <Stats />
         <div className="section-divider" aria-hidden="true" />

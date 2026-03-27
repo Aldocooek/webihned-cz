@@ -84,6 +84,18 @@ export default function FeaturesCarousel() {
   const isDark = useIsDark();
   const shouldReduce = useReducedMotion();
 
+  const onCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (shouldReduce) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    e.currentTarget.style.transform = `perspective(800px) rotateY(${x * 10}deg) rotateX(${y * -8}deg) scale3d(1.01, 1.01, 1.01)`;
+  };
+
+  const onCardMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.currentTarget.style.transform = `perspective(800px) rotateY(0deg) rotateX(0deg) scale3d(1, 1, 1)`;
+  };
+
   const featuresRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: featuresRef,
@@ -154,12 +166,16 @@ export default function FeaturesCarousel() {
                         background: isDark
                           ? gradientStylesDark[features[active].step]
                           : gradientStyles[features[active].step],
+                        transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+                        transformStyle: "preserve-3d",
                       }}
                       onMouseMove={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         e.currentTarget.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
                         e.currentTarget.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                        onCardMouseMove(e);
                       }}
+                      onMouseLeave={onCardMouseLeave}
                     >
                       {/* Cursor-following glow overlay */}
                       <div

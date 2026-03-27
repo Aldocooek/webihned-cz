@@ -13,6 +13,7 @@ import NavigationProgress from "@/components/NavigationProgress";
 import { MotionProvider } from "@/lib/framer";
 import Preloader from "@/components/Preloader";
 import ClientOnlyWidgets from "@/components/ClientOnlyWidgets";
+import SmoothScroller from "@/components/SmoothScroller";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -84,6 +85,7 @@ export default function RootLayout({
     >
       <body className="antialiased overflow-x-hidden" suppressHydrationWarning>
         <MotionProvider>
+          <SmoothScroller />
           <Preloader />
           <ClientOnlyWidgets />
           <ScrollProgress />
@@ -97,6 +99,20 @@ export default function RootLayout({
           <CookieConsent />
           <Analytics />
           <Clarity />
+          {/* Film grain noise overlay — premium texture, nulový JS overhead */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 9998,
+              opacity: 0.028,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+              backgroundRepeat: "repeat",
+              mixBlendMode: "overlay",
+            }}
+          />
         </MotionProvider>
       </body>
     </html>
