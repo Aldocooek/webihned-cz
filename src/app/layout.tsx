@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Instrument_Serif } from "next/font/google";
-import SmoothScroll from "@/components/SmoothScroll";
 import ThemeProvider from "@/components/ThemeProvider";
+import SkipLink from "@/components/SkipLink";
 import StickyCTA from "@/components/StickyCTA";
 import CookieConsent from "@/components/CookieConsent";
+import BackToTop from "@/components/BackToTop";
+import ScrollRing from "@/components/ScrollRing";
+import Analytics from "@/components/Analytics";
+import Clarity from "@/components/Clarity";
+import ScrollProgress from "@/components/ScrollProgress";
+import NavigationProgress from "@/components/NavigationProgress";
+import { MotionProvider } from "@/lib/framer";
+import Preloader from "@/components/Preloader";
+import ClientOnlyWidgets from "@/components/ClientOnlyWidgets";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -18,7 +27,7 @@ const instrumentSerif = Instrument_Serif({
   variable: "--font-serif",
   display: "swap",
   weight: "400",
-  style: ["normal", "italic"],
+  style: ["italic"],
 });
 
 export const metadata: Metadata = {
@@ -28,6 +37,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://webihned.cz"),
   alternates: {
     canonical: "/",
+    languages: {
+      cs: "/",
+    },
   },
   openGraph: {
     title: "Webovou aplikaci za minuty s AI | webihned.cz",
@@ -39,7 +51,7 @@ export const metadata: Metadata = {
     locale: "cs_CZ",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.svg",
         width: 1200,
         height: 630,
         alt: "webihned.cz — Aplikaci za minuty s AI",
@@ -51,7 +63,7 @@ export const metadata: Metadata = {
     title: "Webovou aplikaci za minuty s AI | webihned.cz",
     description:
       "Popište svůj nápad a získejte funkční aplikaci během minut. Začněte zdarma.",
-    images: ["/og-image.png"],
+    images: ["/og-image.svg"],
   },
   robots: {
     index: true,
@@ -70,19 +82,22 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${instrumentSerif.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var d=document.documentElement;var c=localStorage.getItem('theme');if(c==='dark'||(c!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches)){d.classList.add('dark')}else{d.classList.remove('dark')}}catch(e){}})()`,
-          }}
-        />
-      </head>
-      <body className="antialiased">
-        <ThemeProvider />
-        <SmoothScroll />
-        {children}
-        <StickyCTA />
-        <CookieConsent />
+      <body className="antialiased overflow-x-hidden" suppressHydrationWarning>
+        <MotionProvider>
+          <Preloader />
+          <ClientOnlyWidgets />
+          <ScrollProgress />
+          <NavigationProgress />
+          <SkipLink />
+          <ThemeProvider />
+          {children}
+          <ScrollRing />
+          <BackToTop />
+          <StickyCTA />
+          <CookieConsent />
+          <Analytics />
+          <Clarity />
+        </MotionProvider>
       </body>
     </html>
   );

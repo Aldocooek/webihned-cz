@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 
 export default function StickyCTA() {
   const [visible, setVisible] = useState(false);
@@ -50,13 +51,13 @@ export default function StickyCTA() {
         </p>
 
         <div className="flex items-center gap-3 flex-1 sm:flex-none justify-between sm:justify-end">
-          <a
-            href="#"
+          <Link
+            href="/pricing"
             tabIndex={visible && !dismissed ? 0 : -1}
             className="btn-primary bg-accent text-white text-sm font-medium px-6 py-2.5 rounded-full tracking-[-0.01em] whitespace-nowrap"
           >
             Začít zdarma
-          </a>
+          </Link>
 
           <button
             onClick={dismiss}

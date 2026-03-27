@@ -1,26 +1,948 @@
 @import "tailwindcss";
 
+/* ============================================
+   CSS CUSTOM PROPERTIES (light/dark dynamic)
+   ============================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg: #FAFAFA;
+  --color-accent: #E11D48;
+  --color-accent-hover: #BE123C;
+  --color-accent-light: #FFF1F2;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #586474;
+  --color-border: #E2E8F0;
+  --color-input-bg: #FFFFFF;
+  --color-input-text: #0F172A;
+  --color-surface: #ffffff;
+  /* Semantic status colors */
+  --color-check: #16a34a;
+  --color-cross: #dc2626;
+}
+
+.dark {
+  --color-bg: #0a0a0a;
+  --color-accent: #F43F5E;
+  --color-accent-hover: #FB7185;
+  --color-accent-light: #1C1017;
+  --color-text: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-border: #1E293B;
+  --color-input-bg: #0F172A;
+  --color-input-text: #F1F5F9;
+  --color-surface: #111827;
+  /* Semantic status colors — muted for dark bg */
+  --color-check: #4ade80;
+  --color-cross: #f87171;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--color-bg);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-light: var(--color-accent-light);
+  --color-text: var(--color-text);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-border: var(--color-border);
+  --color-input-bg: var(--color-input-bg);
+  --color-input-text: var(--color-input-text);
+  --color-surface: var(--color-surface);
+  --font-heading: var(--font-space), "Space Grotesk", system-ui, sans-serif;
+  --font-body: var(--font-space), "Space Grotesk", system-ui, sans-serif;
+  --font-serif: var(--font-serif), "Instrument Serif", Georgia, serif;
+
+  /* Custom easing */
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quart-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-expo-in-out: cubic-bezier(0.87, 0, 0.13, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================
+   BASE
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  quotes: "\201E" "\201C" "\201A" "\2018";
+}
+
+h1, h2 { text-wrap: balance; }
+
+q { quotes: inherit; }
+q::before { content: open-quote; }
+q::after { content: close-quote; }
+
+/*
+ * HACK: Tailwind v4 @theme inline generates static utility values at build time.
+ * These !important overrides force dark mode colors on Tailwind utilities.
+ * Without them, bg-surface/bg-bg/text-text etc. ignore CSS var changes on .dark.
+ * TODO: Remove when Tailwind v4 supports dynamic @theme with class-based dark mode.
+ */
+.dark .bg-surface { background-color: #111827 !important; }
+.dark .bg-bg { background-color: #0a0a0a !important; }
+.dark .bg-input-bg { background-color: #0F172A !important; }
+.dark .bg-accent-light { background-color: #1C1017 !important; }
+.dark .text-text { color: #F1F5F9 !important; }
+.dark .text-text-secondary { color: #94A3B8 !important; }
+.dark .text-input-text { color: #F1F5F9 !important; }
+.dark .border-border { border-color: #334155 !important; }
+/* Boost faint border-border opacity variants in dark mode */
+.dark .border-border\/30 { border-color: rgba(51,65,85,0.55) !important; }
+.dark .border-border\/40 { border-color: rgba(51,65,85,0.70) !important; }
+.dark .border-border\/60 { border-color: rgba(51,65,85,0.85) !important; }
+.dark .divide-border\/60 > * + * { border-color: rgba(51,65,85,0.85) !important; }
+
+/* Branded selection */
+::selection {
+  background: rgba(225, 29, 72, 0.2);
+  color: var(--color-text);
+}
+
+.dark ::selection {
+  background: rgba(244, 63, 94, 0.3);
+}
+
+/* ============================================
+   SCROLL REVEAL ANIMATIONS
+   ============================================ */
+
+.reveal-up,
+.reveal-left,
+.reveal-right,
+.reveal-fade {
+  opacity: 0;
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-up { transform: translateY(40px); }
+.reveal-left { transform: translateX(-40px); }
+.reveal-right { transform: translateX(40px); }
+.reveal-fade { transform: none; }
+
+.reveal-up.revealed,
+.reveal-left.revealed,
+.reveal-right.revealed,
+.reveal-fade.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal-blur {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(15px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-blur.revealed {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+
+.reveal-clip {
+  opacity: 0;
+  clip-path: inset(0 0 100% 0);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    clip-path 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-clip.revealed {
+  opacity: 1;
+  clip-path: inset(0 0 0% 0);
+}
+
+/* ============================================
+   PAGE LOAD CHOREOGRAPHY
+   ============================================ */
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-hero-title { animation: fadeSlideUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+.animate-hero-subtitle { animation: fadeSlideUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both; }
+.animate-hero-input { animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both; }
+.animate-hero-chips { animation: fadeSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both; }
+.animate-nav { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+.animate-banner { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+
+/* ============================================
+   GRADIENT BACKGROUNDS
+   ============================================ */
+
+.hero-gradient {
+  background:
+    radial-gradient(ellipse 100% 70% at 50% -10%, rgba(225, 29, 72, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60% at 20% -5%, rgba(244, 63, 94, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 60% at 80% -5%, rgba(148, 163, 184, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg) 50%, var(--color-accent-light) 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 300% 300%;
+  animation: heroGradientShift 20s ease infinite;
+}
+
+@keyframes heroGradientShift {
+  0%, 100% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 50%; }
+  50% { background-position: 0% 0%, 0% 0%, 0% 0%, 100% 50%; }
+}
+
+.dark .hero-gradient {
+  background:
+    radial-gradient(ellipse 100% 70% at 50% -10%, rgba(244, 63, 94, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60% at 20% -5%, rgba(225, 29, 72, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 60% at 80% -5%, rgba(100, 116, 139, 0.06) 0%, transparent 50%),
+    linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg) 50%, var(--color-accent-light) 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 300% 300%;
+  animation: heroGradientShift 20s ease infinite;
+}
+
+.pricing-gradient {
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 110%, rgba(225, 29, 72, 0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 60% at 25% 90%, rgba(244, 63, 94, 0.05) 0%, transparent 55%),
+    var(--color-bg);
+}
+
+.dark .pricing-gradient {
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 110%, rgba(244, 63, 94, 0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 60% at 25% 90%, rgba(225, 29, 72, 0.08) 0%, transparent 55%),
+    var(--color-bg);
+}
+
+.cta-gradient {
+  background:
+    radial-gradient(ellipse 55% 65% at 30% 50%, rgba(225, 29, 72, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 55% 65% at 70% 50%, rgba(244, 63, 94, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 90% at 50% 50%, rgba(251, 113, 133, 0.08) 0%, transparent 80%),
+    var(--color-bg);
+}
+
+.dark .cta-gradient {
+  background:
+    radial-gradient(ellipse 55% 65% at 30% 50%, rgba(244, 63, 94, 0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 55% 65% at 70% 50%, rgba(225, 29, 72, 0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 90% at 50% 50%, rgba(251, 113, 133, 0.08) 0%, transparent 80%),
+    var(--color-bg);
+}
+
+/* ============================================
+   FAQ ACCORDION
+   ============================================ */
+
+.faq-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq-content.open { grid-template-rows: 1fr; }
+.faq-content > div { overflow: hidden; }
+
+/* ============================================
+   BUTTONS & INTERACTIVE
+   ============================================ */
+
+/* Animated underline for inline text links (not buttons) */
+.text-link {
+  text-decoration: none;
+  background-image: linear-gradient(var(--color-accent), var(--color-accent));
+  background-size: 0% 1.5px;
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  transition: background-size 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.text-link:hover {
+  background-size: 100% 1.5px;
+}
+
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px -8px rgba(225, 29, 72, 0.4);
+}
+
+.dark .btn-primary:hover {
+  box-shadow: 0 8px 30px -8px rgba(244, 63, 94, 0.5);
+}
+
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-text);
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.dark .btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.chip {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.chip:hover {
+  transform: translateY(-2px);
+  background-color: var(--color-surface);
+  border-color: var(--color-text);
+}
+
+.card-hover {
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-accent) !important;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 4px 8px rgba(0,0,0,0.06),
+    0 12px 24px rgba(0,0,0,0.08),
+    0 24px 48px rgba(0,0,0,0.04),
+    0 0 0 1px var(--color-accent);
+}
+
+.dark .card-hover:hover {
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.12),
+    0 4px 8px rgba(0,0,0,0.18),
+    0 12px 24px rgba(0,0,0,0.24),
+    0 24px 48px rgba(0,0,0,0.16),
+    0 0 0 1px var(--color-accent);
+}
+
+.link-arrow svg {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.link-arrow:hover svg { transform: translateX(4px); }
+
+/* ============================================
+   APP SHOWCASE CARD OVERLAY
+   ============================================ */
+
+.card-overlay {
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.group:hover .card-overlay {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-overlay { transition: none; }
+}
+
+/* ============================================
+   SCROLLBAR & MISC
+   ============================================ */
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.stagger-children > * { opacity: 0; transform: translateY(20px); }
+.stagger-children.revealed > *:nth-child(1) { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0ms both; }
+.stagger-children.revealed > *:nth-child(2) { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 80ms both; }
+.stagger-children.revealed > *:nth-child(3) { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 160ms both; }
+.stagger-children.revealed > *:nth-child(4) { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 240ms both; }
+.stagger-children.revealed > *:nth-child(5) { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 320ms both; }
+
+/* ============================================
+   MARQUEE
+   ============================================ */
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ============================================
+   HOW IT WORKS — STEP NUMBER FADE-IN
+   ============================================ */
+
+/* The background step number starts invisible and fades in
+   after the card itself has appeared (extra 300ms delay) */
+.step-bg-number {
+  opacity: 0;
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+}
+
+/* When the parent card is revealed (ScrollReveal adds .revealed to its wrapper),
+   we can't directly target the child — so we trigger via the article itself.
+   The card-hover article is always visible once rendered, so we use an
+   animation triggered by the ScrollReveal parent becoming .revealed */
+.reveal-up.revealed .step-bg-number,
+.reveal-left.revealed .step-bg-number,
+.reveal-right.revealed .step-bg-number,
+.reveal-fade.revealed .step-bg-number {
+  opacity: 0.07;
+}
+
+/* ============================================
+   HERO ORB FLOAT ANIMATION
+   ============================================ */
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 10px) scale(0.95); }
+}
+.animate-float { animation: float 8s ease-in-out infinite; }
+
+/* ============================================
+   MORPHING BLOB
+   ============================================ */
+
+@keyframes morphBlob {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50% { border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%; }
+  75% { border-radius: 60% 40% 60% 30% / 70% 30% 50% 60%; }
+}
+
+.animate-morph {
+  animation: morphBlob 15s ease-in-out infinite;
+}
+
+/* ============================================
+   SVG STROKE DRAW ANIMATION
+   ============================================ */
+
+/* Each SVG child element starts with its stroke invisible (dashoffset = dasharray).
+   When a .revealed ancestor is added by ScrollReveal, stroke-dashoffset animates to 0,
+   drawing the path. No extra JS needed — piggybacks on existing ScrollReveal. */
+
+.svg-draw path,
+.svg-draw polyline,
+.svg-draw line,
+.svg-draw circle,
+.svg-draw rect {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Trigger: any .revealed ancestor (ScrollReveal wraps each card in reveal-up/fade/etc.) */
+.reveal-up.revealed .svg-draw path,
+.reveal-up.revealed .svg-draw polyline,
+.reveal-up.revealed .svg-draw line,
+.reveal-up.revealed .svg-draw circle,
+.reveal-up.revealed .svg-draw rect,
+.reveal-left.revealed .svg-draw path,
+.reveal-left.revealed .svg-draw polyline,
+.reveal-left.revealed .svg-draw line,
+.reveal-left.revealed .svg-draw circle,
+.reveal-left.revealed .svg-draw rect,
+.reveal-right.revealed .svg-draw path,
+.reveal-right.revealed .svg-draw polyline,
+.reveal-right.revealed .svg-draw line,
+.reveal-right.revealed .svg-draw circle,
+.reveal-right.revealed .svg-draw rect,
+.reveal-fade.revealed .svg-draw path,
+.reveal-fade.revealed .svg-draw polyline,
+.reveal-fade.revealed .svg-draw line,
+.reveal-fade.revealed .svg-draw circle,
+.reveal-fade.revealed .svg-draw rect {
+  stroke-dashoffset: 0;
+}
+
+/* ============================================
+   GRADIENT TEXT
+   ============================================ */
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-text) 0%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   GRAIN / NOISE TEXTURE OVERLAY
+   ============================================ */
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============================================
+   GLASSMORPHISM NAVBAR BORDER
+   ============================================ */
+
+/* Direction-aware underline for desktop nav links */
+.nav-link-directional {
+  position: relative;
+}
+.nav-link-directional::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: var(--underline-origin, left);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-link-directional:hover::after {
+  transform: scaleX(1);
+}
+.nav-link-directional.nav-link-active::after {
+  transform: scaleX(1);
+}
+
+.nav-glass {
+  border-bottom: 1px solid transparent;
+  background-image: linear-gradient(var(--color-bg), var(--color-bg)), linear-gradient(90deg, transparent, var(--color-border), transparent);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* ============================================
+   SECTION DIVIDER
+   ============================================ */
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-border) 50%, transparent 100%);
+  margin: 0 auto;
+  max-width: 80%;
+}
+
+/* ============================================
+   BUTTON SHIMMER EFFECT
+   ============================================ */
+
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.15) 55%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: inherit;
+}
+.btn-primary:hover::after {
+  transform: translateX(100%);
+}
+
+/* ============================================
+   INPUT FOCUS GLOW
+   ============================================ */
+
+input:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.15), 0 0 20px -4px rgba(225, 29, 72, 0.2);
+  border-color: var(--color-accent) !important;
+  transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.dark input:focus, .dark textarea:focus {
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2), 0 0 20px -4px rgba(244, 63, 94, 0.25);
+}
+
+/* ============================================
+   PRICING CARD HOVER DIMMING
+   ============================================ */
+
+/* Dim sibling cards when one is hovered */
+.pricing-cards:has(.card-hover:hover) .card-hover:not(:hover) {
+  opacity: 0.6;
+  filter: grayscale(20%);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+}
+
+/* ============================================
+   WORD REVEAL ANIMATION
+   ============================================ */
+
+.word-revealed {
+  opacity: 1 !important;
+  clip-path: inset(0 0 0% 0) !important;
+  transform: none !important;
+}
+
+/* ============================================
+   MAGNETIC BUTTON (CSS-only, used on server components)
+   ============================================ */
+
+.magnetic-btn {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.magnetic-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+}
+
+.magnetic-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ============================================
+   TILT CARD (CSS-only fallback)
+   JS hook overrides these at runtime for pointer-tracking tilt.
+   ============================================ */
+
+.tilt-card {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tilt-card:hover {
+  transform: perspective(800px) rotateX(-2deg) rotateY(2deg) translateY(-4px);
+}
+
+/* ============================================
+   ALL-BUT-ME BLUR ON USE CASE CARDS
+   ============================================ */
+
+.usecases-grid:has(.card-hover:hover) .card-hover:not(:hover) {
+  filter: blur(2px);
+  opacity: 0.55;
+}
+
+.usecases-grid .card-hover {
+  transition: filter 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usecases-grid:has(.card-hover:hover) .card-hover:not(:hover) {
+    filter: none;
+    opacity: 0.6;
+  }
+}
+
+/* ============================================
+   TOOLTIP
+   ============================================ */
+
+.tooltip-content {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+  background: var(--color-text);
+  color: var(--color-bg);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  max-width: 280px;
+  z-index: 50;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.tooltip-wrapper:hover .tooltip-content {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  pointer-events: auto;
+}
+
+/* Arrow */
+.tooltip-content::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--color-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip-content { transition: none; }
+}
+
+/* ============================================
+   SUBTLE SECTION BG VARIATION
+   ============================================ */
+
+.section-bg-warm { background-color: color-mix(in srgb, var(--color-bg) 97%, var(--color-accent) 3%); }
+.section-bg-cool { background-color: color-mix(in srgb, var(--color-bg) 97%, #6366f1 3%); }
+.section-bg-neutral { background-color: var(--color-bg); }
+
+/* ============================================
+   WAVE DIVIDER
+   ============================================ */
+
+.wave-divider {
+  height: 40px;
+  width: 100%;
+  overflow: hidden;
+}
+.wave-divider svg {
+  width: 200%;
+  height: 100%;
+  animation: waveSlide 12s linear infinite;
+}
+@keyframes waveSlide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+/* ============================================
+   PAGE TRANSITION FADE-UP
+   ============================================ */
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+main {
+  animation: pageEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+/* ============================================
+   CSS SCROLL-DRIVEN (Progressive Enhancement)
+   ============================================ */
+
+@supports (animation-timeline: view()) {
+  .scroll-fade-in {
+    animation: scrollFadeIn linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+
+  @keyframes scrollFadeIn {
+    from { opacity: 0.3; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .section-divider {
+    animation: scrollDividerFade linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 50%;
+  }
+
+  @keyframes scrollDividerFade {
+    from { opacity: 0; transform: scaleX(0.3); }
+    to { opacity: 1; transform: scaleX(1); }
+  }
+}
+
+/* ============================================
+   FLOAT LABELS (kontakt form)
+   ============================================ */
+
+.float-label {
+  position: relative;
+}
+.float-label label {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: all 0.25s ease;
+  pointer-events: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+.float-label input:focus ~ label,
+.float-label input:not(:placeholder-shown) ~ label,
+.float-label textarea:focus ~ label,
+.float-label textarea:not(:placeholder-shown) ~ label {
+  top: 8px;
+  transform: translateY(0) scale(0.85);
+  transform-origin: left;
+  color: var(--color-accent);
+  font-size: 12px;
+}
+.float-label textarea ~ label {
+  top: 16px;
+  transform: translateY(0);
+}
+.float-label textarea:focus ~ label,
+.float-label textarea:not(:placeholder-shown) ~ label {
+  top: 4px;
+}
+
+/* Checkmark draw animation */
+.checkmark-circle {
+  stroke-dasharray: 140;
+  stroke-dashoffset: 140;
+  animation: drawCircle 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+.checkmark-path {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: drawCheck 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+}
+
+@keyframes drawCircle {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ============================================
+   MOBILE ANIMATION REDUCTIONS
+   ============================================ */
+
+@media (max-width: 767px) {
+  /* Shorten all reveal transitions */
+  .reveal-up, .reveal-left, .reveal-right, .reveal-fade, .reveal-blur, .reveal-clip {
+    transition-duration: 0.5s !important;
+  }
+
+  /* Reduce card hover effects (touch doesn't have hover) */
+  .card-hover:hover {
+    transform: none !important;
+  }
+
+  /* Disable parallax on mobile (performance) */
+  .animate-float {
+    animation-duration: 12s; /* slower = less CPU */
+  }
+
+  /* Simplify hero gradient animation */
+  .hero-gradient {
+    animation-duration: 30s; /* slower */
+  }
+
+  /* Reduce blur effects */
+  .usecases-grid:has(.card-hover:hover) .card-hover:not(:hover) {
+    filter: none !important;
+    opacity: 0.7 !important;
+  }
+}
+
+/* ============================================
+   E12: BLUR-TO-SHARP SCROLL-DRIVEN REVEAL
+   ============================================ */
+
+@supports (animation-timeline: view()) {
+  .scroll-sharpen {
+    animation: sharpenReveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 40%;
+  }
+
+  @keyframes sharpenReveal {
+    from { filter: blur(3px); opacity: 0.7; }
+    to   { filter: blur(0);   opacity: 1;   }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-sharpen { filter: none; opacity: 1; animation: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main { animation: none; }
+  .reveal-up, .reveal-left, .reveal-right, .reveal-fade {
+    opacity: 1; transform: none; transition: none;
+  }
+  .reveal-blur { opacity: 1; filter: none; transform: none; transition: none; }
+  .reveal-clip { opacity: 1; clip-path: none; transition: none; }
+  .animate-hero-title, .animate-hero-subtitle, .animate-hero-input,
+  .animate-hero-chips, .animate-nav, .animate-banner {
+    animation: none; opacity: 1;
+  }
+  .stagger-children > * { opacity: 1; transform: none; animation: none !important; }
+  .btn-primary:hover, .btn-secondary:hover, .chip:hover, .card-hover:hover { transform: none; }
+  .btn-primary::after { display: none; }
+  .faq-content { transition: none; }
+  .animate-marquee { animation: none; }
+  /* E7: disable color-morph overlays */
+  [data-scroll-overlay] { display: none !important; }
+  .animate-float { animation: none; }
+  .animate-morph { animation: none; }
+  .wave-divider svg { animation: none; width: 100%; }
+  .step-bg-number { opacity: 0.07; transition: none; }
+  .hero-gradient { animation: none; }
+  input:focus, textarea:focus { transition: none; }
+  .pricing-cards:has(.card-hover:hover) .card-hover:not(:hover) { transition: none; }
+  .word-reveal-item { opacity: 1 !important; clip-path: none !important; transform: none !important; transition: none !important; }
+  .magnetic-btn:hover, .magnetic-btn:active { transform: none; transition: none; }
+  .tilt-card:hover { transform: none; transition: none; }
+  .float-label label { transition: none; }
+  /* SVG draw — show strokes immediately, no animation */
+  .svg-draw path, .svg-draw polyline, .svg-draw line, .svg-draw circle, .svg-draw rect {
+    stroke-dasharray: none; stroke-dashoffset: 0; transition: none;
+  }
+  .checkmark-circle, .checkmark-path {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
 }
